@@ -34,14 +34,15 @@ EXTENSIONS = {
 
 DOWNLOADER_MIDDLEWARES = {
   # scrapy-playwright must come early
-  "scrapy_playwright.plugin.PlaywrightDownloadHandler": 543,
+  # "scrapy_playwright.plugin.PlaywrightDownloadHandler": 543,
   # then any other downloader middlewares
   "scrapy_user_agents.middlewares.RandomUserAgentMiddleware": 400,
   "scrapeops_scrapy_proxy_sdk.scrapeops_scrapy_proxy_sdk.ScrapeOpsScrapyProxySdk": 725,
   # disable built‑in UA/retry if you override
+  "scrapeops_scrapy.middleware.retry.RetryMiddleware": 550,
   "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
   "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
-  "scrapeops_scrapy.middleware.retry.RetryMiddleware": 550,
+  
 }
 
 

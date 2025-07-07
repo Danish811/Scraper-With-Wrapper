@@ -45,13 +45,23 @@ class WalmartSpider(scrapy.Spider):
     def start_requests(self):
         """Legacy method for backward compatibility"""
         # Test with a simple website that doesn't block scrapers
-        test_url = 'https://httpbin.org/html'
+        payload = {"keyword": self.custom_keyword, "sort": "rlvncy", "page": 1}
+        search_url = "https://www.snapdeal.com/search?" + urlencode(payload)
+        
         yield scrapy.Request(
-            url=test_url,
+            url=search_url,
             callback=self.parse_search_results,
-            meta={"playwright": True, 'keyword': self.custom_keyword, 'page': 1},
+            meta={
+                "playwright": True, 
+                "playwright_page_methods": [
+                # optional: wait for the product-list container to appear
+                    {"name": "wait_for_selector", "args": ["div.product-tuple-listing"]},
+                ],
+                "keyword": self.custom_keyword, 
+                "page": 1,
+                },
             headers={
-                'Referer': 'https://httpbin.org/',
+                'Referer': 'https://www.snapdeal.com/',
                 'Sec-Fetch-Site': 'same-origin',
             }
         )
@@ -65,11 +75,11 @@ class WalmartSpider(scrapy.Spider):
         self.logger.info(f"Response URL: {response.url}")
         self.logger.info(f"Response status: {response.status}")
         
-        script_tag = response.xpath('//div[@id="products"]//div[contains(@class, "product-tuple-listing")]')
-        if script_tag:
+        products = response.xpath('//div[contains(@class, "product-tuple-listing")]')
+        if products:
             self.logger.info("Found Snapdeal product listings")
             try:
-                product_list = script_tag
+                product_list = products
                 self.logger.info(f"Found {len(product_list)} products in the list")
                 for idx, product in enumerate(product_list):
                     product_url = product.xpath('.//a[@class="dp-widget-link"]/@href').get()
@@ -79,7 +89,12 @@ class WalmartSpider(scrapy.Spider):
                         yield scrapy.Request(
                             url=snapdeal_product_url,
                             callback=self.parse_product_data,
-                            meta={'keyword': keyword, 'page': page, 'position': idx + 1}
+                            meta={
+                              "playwright": True,        # in case product pages need JS
+                              "keyword": response.meta["keyword"],
+                              "page": response.meta["page"],
+                              "position": idx + 1,
+                            },
                         )
             except Exception as e:
                 self.logger.warning(f"Failed to parse Snapdeal product listings: {e}")
