@@ -20,7 +20,12 @@ LOG_LEVEL = 'INFO'
 
 SCRAPEOPS_API_KEY = 'd114b199-72ee-4ae8-9c36-5847687b8102'
 
-SCRAPEOPS_PROXY_ENABLED = False  # Temporarily disable proxy
+SCRAPEOPS_PROXY_ENABLED = True  # Temporarily disable proxy
+
+DOWNLOAD_HANDLERS = {
+  "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+  "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
 
 # Add In The ScrapeOps Monitoring Extension
 EXTENSIONS = {
@@ -28,12 +33,17 @@ EXTENSIONS = {
 }
 
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
-    'scrapeops_scrapy_proxy_sdk.scrapeops_scrapy_proxy_sdk.ScrapeOpsScrapyProxySdk': 725,
-    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,  # Disable default UA
-    'scrapeops_scrapy.middleware.retry.RetryMiddleware': 550,
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
+  # scrapy-playwright must come early
+  "scrapy_playwright.plugin.PlaywrightDownloadHandler": 543,
+  # then any other downloader middlewares
+  "scrapy_user_agents.middlewares.RandomUserAgentMiddleware": 400,
+  "scrapeops_scrapy_proxy_sdk.scrapeops_scrapy_proxy_sdk.ScrapeOpsScrapyProxySdk": 725,
+  # disable built‑in UA/retry if you override
+  "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
+  "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
+  "scrapeops_scrapy.middleware.retry.RetryMiddleware": 550,
 }
+
 
 # Max Concurrency On ScrapeOps Proxy Free Plan is 1 thread
 CONCURRENT_REQUESTS = 1
