@@ -1,0 +1,6 @@
+scrapy
+scrapeops-scrapy
+scrapeops-scrapy-proxy-sdk
+scrapy-playwright
+scrapy-user-agents
+playwright
